@@ -15,8 +15,15 @@ h1 {
   margin-top: 0px;
   padding-top: 20px;
 }
+
 #container {
-  margin-left: 40%;
+  margin: 20px 37%;
+}
+#canvas {
+  background-color: rgb(219, 214, 214);
+  width: 400px;
+  height: 400px;
+  margin: 0 auto;
 }
 #settings {
   height: 50px;
