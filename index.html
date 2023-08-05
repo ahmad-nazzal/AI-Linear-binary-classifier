@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI - HW 2</title>
+    <script src="javaScript.js" defer></script>
+    <link href="stylesheet.css" rel="stylesheet" />
+  </head>
+  <body>
+    <h1>Linear binary classifier</h1>
+    <div id="settings">
+      <div id="sett">
+        <div class="grid">
+          <label>Learning Rate:</label>
+          <input id="Learning-rate" type="number" min="4" max="8" value="4" />
+        </div>
+        <div class="grid">
+          <label>Maximum Number Of Iterations:</label>
+          <input id="max-iteration" type="number" min="4" max="8" value="4" />
+        </div>
+        <button id="reset" onclick="reset()">Start</button>
+        <div id="range-container" class="grid">
+          <label>Speed:</label>
+          <input
+            id="speedRange"
+            type="range"
+            onclick="speedd()"
+            min="250"
+            max="2000"
+            value="1000"
+          />
+        </div>
+      </div>
+    </div>
+    <div id="container"></div>
+    <div id="tc" class="fixed"></div>
+  </body>
+</html>
