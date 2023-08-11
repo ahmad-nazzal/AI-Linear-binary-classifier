@@ -1,11 +1,10 @@
 var cnv;
 function centerCanvas() {
-  cnv.position(568, 149);
+  cnv.position(450, 149);
 }
 function setup() {
   cnv = createCanvas(600, 400);
   centerCanvas();
-
   background(0);
 }
 window.oncontextmenu = function (e) {
@@ -13,6 +12,8 @@ window.oncontextmenu = function (e) {
 };
 let shape1List = new Set();
 let shape2List = new Set();
+// shape1List.add("150,150");
+// shape2List.add("50,50");
 function draw() {
   if (mouseIsPressed === true) {
     if (
@@ -50,6 +51,40 @@ function draw() {
     }
   }
 }
+function drawAxis() {
+  const cx = color(0, 0, 255);
+  fill(cx);
+  stroke(500);
+  line(0, 200, 600, 200);
+  line(300, 0, 300, 400);
+}
+function redraww() {
+  clear();
+  background(0);
+  for (const shape of shape1List) {
+    const c = color(255, 0, 0);
+    fill(c);
+    noStroke();
+    let arr = shape.split(",");
+    rect(arr[0], arr[1], 15, 15);
+  }
+  for (const shape of shape2List) {
+    const c = color(0, 255, 0);
+    fill(c);
+    noStroke();
+    let arr = shape.split(",");
+    arr[0] = Number(arr[0]);
+    arr[1] = Number(arr[1]);
+    triangle(
+      arr[0],
+      arr[1],
+      arr[0] - 10,
+      arr[1] + 13,
+      arr[0] + 10,
+      arr[1] + 13
+    );
+  }
+}
 // ----------------------------------------------------------------------------------------------
 // i was working in the original canvas but p5 is more beautiful
 // let speed = 1000;
@@ -68,9 +103,9 @@ function draw() {
 //     queens[index].style.transition = "all " + speed / 1000 + "s";
 //   }
 // }
-// function sleep(milliseconds) {
-//   return new Promise((resolve) => setTimeout(resolve, milliseconds));
-// }
+function sleep(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
 
 // var rect = canvas.getBoundingClientRect();
 // scaleX = canvas.width / rect.width;
@@ -108,20 +143,24 @@ function draw() {
 // shape 2 -> 1
 
 let w1, w2, threshold;
-let learningRate = document.getElementById("Learning-rate").value;
+let learningRate;
+let maxIterations;
 function initialization() {
   w1 = Math.random() - 0.5;
   w2 = Math.random() - 0.5;
   threshold = Math.random() - 0.5;
+
   console.log("initialization");
   console.log("w1: " + w1 + " w2: " + w2 + " threshold: " + threshold);
 }
-function sigmoid(num) {
-  return 1 / (1 + Math.pow(Math.E, -1 * num));
+function step(num) {
+  if (num >= 0) return 1;
+  return 0;
+  // return 1 / (1 + Math.pow(Math.E, -1 * num));
 }
 //actual output
-function activate(x1, w1, x2, w2, learningRate) {
-  return sigmoid(x1 * w1 + x2 * w2 - learningRate);
+function activate(x1, w1, x2, w2, threshold) {
+  return step(x1 * w1 + x2 * w2 - threshold);
 }
 
 function calcualteError(actualOutput, expectedOutput) {
@@ -129,6 +168,7 @@ function calcualteError(actualOutput, expectedOutput) {
 }
 
 function correctWeight(learningRate, x, error) {
+  console.log("correction weight " + learningRate * x * error);
   return learningRate * x * error;
 }
 
@@ -140,30 +180,46 @@ function trainListOfData(listOfData, expectedOutput) {
     console.log("*****************");
     let x = data.split(",")[0];
     let y = data.split(",")[1];
-    let actualOutput = activate(x, w1, y, w2, learningRate);
+    let actualOutput = activate(x, w1, y, w2, threshold);
     console.log("expectedOutput: " + expectedOutput);
     console.log("actualOutput: " + actualOutput);
     let error = calcualteError(actualOutput, expectedOutput);
     console.log("error: " + error);
     w1 = trainWeight(w1, correctWeight(learningRate, x, error));
     w2 = trainWeight(w2, correctWeight(learningRate, y, error));
+    threshold = trainWeight(threshold, correctWeight(learningRate, 1, error));
+    redraww();
+    drawLine();
     console.log("*****************");
+    if (expectedOutput == 0) {
+      if (actualOutput == expectedOutput) numShape1Correct++;
+    } else {
+      if (actualOutput == expectedOutput) numShape2Correct++;
+    }
   }
 }
 function drawLine() {
   stroke(500);
   let y1 = threshold / w2;
-  let y2 = (-1 * 600 * w1 + threshold) / w2;
+  console.log("y1: " + y1);
+  let y2 = (-1 * 600 * w1 - threshold) / w2;
+  console.log("y2: " + y2);
+  y1 = Number(y1);
+  y2 = Number(y2);
   line(0, y1, 600, y2);
 }
-function startTraining() {
-  let maxIterations = document.getElementById("max-iteration").value;
+let numShape1Correct = 0;
+let numShape2Correct = 0;
+async function startTraining() {
+  maxIterations = document.getElementById("max-iteration").value;
+  learningRate = document.getElementById("Learning-rate").value;
   console.log("maxIterations: " + maxIterations);
   console.log(shape1List);
   console.log(shape2List);
   initialization();
   let countIteration = 0;
-
+  let w1p = w1,
+    w2p = w2;
   while (true) {
     console.log("---------------------------------------");
     console.log("w1: " + w1 + " w2: " + w2);
@@ -174,8 +230,68 @@ function startTraining() {
     console.log("w1: " + w1 + " w2: " + w2);
     console.log("---------------------------------------");
 
+    document.getElementById("show-data").innerHTML =
+      "Performence is: " +
+      ((numShape1Correct + numShape2Correct) /
+        (shape1List.size + shape2List.size)) *
+        100 +
+      "%";
+    numShape1Correct = 0;
+    numShape2Correct = 0;
+    if (w1 == w1p && w2 == w2p) {
+      alert("The weights are stable :)");
+      break;
+    }
+    await sleep(50);
+    w1p = w1;
+    w2p = w2;
     countIteration++;
-    if (countIteration == maxIterations) break;
+    if (countIteration == maxIterations) {
+      alert(maxIterations + "epochs are done");
+      break;
+    }
   }
-  drawLine();
+  console.log(
+    "final equation is: X1 " + w1 + " + X2 " + w2 + " + " + threshold
+  );
+}
+
+function clearCanvas() {
+  clear();
+  background(0);
+  shape1List.clear();
+  shape2List.clear();
+}
+function classify() {
+  let x = document.getElementById("x-value").value;
+  let y = document.getElementById("y-value").value;
+  x = Number(x);
+  y = Number(y);
+  let sample = activate(x, w1, y, w2, threshold);
+  stroke(255);
+  if (sample == 0) {
+    alert("red");
+    const c = color(255, 0, 0);
+    fill(c);
+    rect(x, y, 15, 15);
+  } else if (sample == 1) {
+    alert("green");
+    const c = color(0, 255, 0);
+    fill(c);
+    triangle(x, y, x - 10, y + 13, x + 10, y + 13);
+  }
+}
+
+function convertXToCartesian(x) {
+  return x - 300;
+}
+function convertYToCartesian(y) {
+  return y <= 200 ? 200 - y : y - 200;
+}
+
+function normalize(i, Imin, Imax) {
+  return (i - Imin) * (2 / (Imax - Imin)) - 1;
+}
+function deNormalize(ON, Omax, Omin) {
+  return (ON + 1) * ((Omax - Omin) / 2) + Omin;
 }
